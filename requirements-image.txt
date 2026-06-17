@@ -1,0 +1,12 @@
+# Runtime dependencies for serverless images that already provide
+# CUDA-compatible torch and torchvision.
+#
+# Install this first, then install this package with:
+#   pip install --no-deps -e .
+
+pillow>=10.0
+pydantic>=2.7
+pyyaml>=6.0
+safetensors>=0.4
+transformers>=4.57
+wakareeru @ git+https://github.com/SniperPigeon/wakareeru.git@main

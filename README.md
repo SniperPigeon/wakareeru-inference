@@ -23,6 +23,15 @@ python scripts/smoke_test_handler.py \
 
 当前依赖写在 `pyproject.toml`。其中 `wakareeru` 主仓库通过 Git dependency 安装，因为分类模型定义、加载和 crop 分类逻辑来自主仓库的 `model_core`。
 
+如果 serverless / GPU 平台镜像已经提供 CUDA 版 `torch` 和 `torchvision`，不要用普通 `pip install -e .` 重新解析并覆盖 PyTorch。镜像构建时使用：
+
+```bash
+pip install -r requirements-image.txt
+pip install --no-deps -e .
+```
+
+`requirements-image.txt` 只包含平台镜像需要额外安装的非 PyTorch 运行依赖；`torch` / `torchvision` 由基础镜像负责。
+
 当前配置使用 `main` 分支：
 
 ```toml
