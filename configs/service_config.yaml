@@ -21,4 +21,5 @@ classifier:
   top_k: 5
 
 postprocess:
+  confusion_groups_enabled: false
   confusion_groups: []

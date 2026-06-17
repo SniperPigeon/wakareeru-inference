@@ -34,6 +34,7 @@ class ConfusionGroup(BaseModel):
 
 
 class PostprocessConfig(BaseModel):
+    confusion_groups_enabled: bool = False
     confusion_groups: list[ConfusionGroup] = Field(default_factory=list)
 
 
