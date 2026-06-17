@@ -14,7 +14,7 @@ dependencies = [
     "torch",
     "torchvision",
     "transformers>=4.57",
-    "wakareeru @ file:///Users/yukun/projects/wakareeru",
+    "wakareeru @ git+https://github.com/SniperPigeon/wakareeru.git@main",
 ]
 
 [project.optional-dependencies]
