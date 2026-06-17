@@ -75,12 +75,17 @@ models/
     vocab.txt
     ...
   wakareeru-0.1.0-alpha.1/
+    backbone/
     model_config.json
     labels.json
     classifier.safetensors
     processor/
     manifest.json
 ```
+
+Wakareeru 分类模型由主仓库运行 `python -m trainer.export_inference_model` 导出。分类 artifact 必须是完整本地目录：`model_core.load_classifier` 会从 `classifier.model_dir` 读取本地 `backbone/`、`processor/` 和 `classifier.safetensors`，缺失时直接报错，不回退到 Hugging Face cache 或联网下载。
+
+分类输入尺寸以 artifact 内 `model_config.json` 的 `image_size` 为准；主仓库导出时会同步 `processor/preprocessor_config.json` 的默认 `size` / `crop_size`。本仓库不要另行硬编码分类 resize/crop 尺寸。
 
 ## Serverless 入口
 
@@ -94,7 +99,7 @@ wakareeru_inference.handler.handler
 
 1. 读取 `configs/service_config.yaml`，或读取环境变量 `WAKAREERU_SERVICE_CONFIG` 指定的配置文件。
 2. 从 `detector.model_path` 加载本地 Grounding-DINO。
-3. 从 `classifier.model_dir` 加载本地 Wakareeru 分类模型。
+3. 从 `classifier.model_dir` 加载本地 Wakareeru 分类模型 artifact。
 4. 在 worker 生命周期内复用已加载模型处理后续请求。
 
 ## API 端点

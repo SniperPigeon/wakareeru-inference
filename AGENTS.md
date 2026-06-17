@@ -13,6 +13,9 @@
 - 配置项应写入 `configs/service_config.yaml` 和 `wakareeru_inference/config.py`。推理正式路径不要在代码里用 `.get(..., 默认值)` 静默兜底新配置；缺失关键配置时应尽早报错。
 - 模型 artifact 不提交进仓库。默认从本地 `models/` 读取；与开发伙伴同步时使用私有对象存储或明确版本目录，避免依赖可变的本地状态。
 - `wakareeru` 主仓库通过 Git dependency 提供 `model_core`。发布或部署前优先固定 tag 或 commit SHA，不要让生产镜像漂在 `main` 上。
+- Wakareeru 分类模型 artifact 由主仓库 `python -m trainer.export_inference_model` 导出。artifact schema、`backbone.path` / `processor` 路径解析、缺失文件报错和禁止回退到 Hugging Face cache 的规则，应在主仓库的 `model_core.loader` 中实现；本仓库只把 `classifier.model_dir` 交给 `load_classifier`，不要在推理侧重复拼装或解析分类模型内部路径。
+- 推理侧应要求 `classifier.model_dir` 指向完整本地 artifact，包含 `backbone/`、`processor/`、`classifier.safetensors`、`model_config.json`、`labels.json` 和 `manifest.json`。检测模型是否允许下载由 detector 配置单独决定，不应和分类模型 artifact 规则混在一起。
+- 分类模型的 resize/crop 输入尺寸以 artifact 内 `model_config.json` 的 `image_size` 为准；主仓库导出时会同步 `processor/preprocessor_config.json` 的默认 `size` / `crop_size`。不要在本仓库另行硬编码分类输入尺寸。
 - GPU/serverless 镜像通常由基础镜像提供 CUDA 版 `torch` 和 `torchvision`。镜像构建时优先用 `requirements-image.txt` 安装非 PyTorch 运行依赖，再用 `pip install --no-deps -e .` 安装本仓库，避免覆盖平台提供的 PyTorch。
 - 如果 handler、event schema、响应 schema、模型目录结构、配置项或入口命令发生非显然变化，同步更新 README 和本文件。
 - 不要把一次性测试结果、当前模型分数、临时实验结论、具体样本数或易过期部署状态写进本文件；这类信息应放在 docs、issue、PR 或实验记录里。
@@ -22,6 +25,7 @@
 
 - 本仓库不负责训练模型；训练、导出和数据集构建在 `wakareeru` 主仓库。
 - 本仓库不自动下载模型；serverless 镜像或启动脚本可以在部署层从 Cloudflare R2 等私有存储同步模型。
+- 分类模型不依赖 Hugging Face 本地 cache；`classifier.model_dir` 必须指向完整的 Wakareeru artifact 目录。`model_core.load_classifier` 负责从该目录加载本地 backbone 与 processor，本仓库不为分类模型另设 backbone 配置项或本地 loader 分叉。
 - 本仓库目前不提供 FastAPI / Flask 等自建 HTTP API；平台应调用 `wakareeru_inference.handler.handler`。
 - `handler` 接收 serverless event，默认读取 `event["input"]`，核心图片字段是 `input.image_base64`。
 - 模型路径相对仓库根目录解析，默认配置在 `configs/service_config.yaml`。
@@ -80,6 +84,14 @@ r2:<bucket>/models/
 models/
   grounding-dino/
   wakareeru-0.1.0-alpha.1/
+    backbone/
+    processor/
+    classifier.safetensors
+    model_config.json
+    labels.json
+    manifest.json
 ```
+
+Wakareeru 分类 artifact 由主仓库导出，不在本仓库内重新组装。`model_config.json` 记录分类架构、`backbone.path`、label 数和训练输入 `image_size`；`manifest.json` 记录 artifact 版本、checkpoint 来源、backbone / processor 子目录与训练指标摘要。artifact 内部字段由 `model_core` 读取并用于分类预处理，本仓库不重复解析。
 
 共享给开发伙伴时使用只读 R2 token，并限制到模型 prefix。生产配置应指向明确版本，不要只依赖 `latest` 这类可变目录。
