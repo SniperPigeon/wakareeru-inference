@@ -9,6 +9,7 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
     "pyyaml>=6.0",
+    "python-dotenv",
     "torch",
     "torchvision",
     "transformers>=4.57",

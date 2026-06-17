@@ -147,6 +147,12 @@ handler(event)
 
 ## 输出格式
 
+状态字段枚举：
+
+- 顶层 `status`：`ok`、`no_detection`、`error`。
+- `detection.status`：`detected`、`fallback_whole_image`。
+- `classification.status`：`classified`、`low_confidence`、`no_prediction`。
+
 成功响应：
 
 ```json

@@ -4,6 +4,7 @@ from PIL import Image
 
 from wakareeru_inference.config import CropConfig
 from wakareeru_inference.detector import Detection
+from wakareeru_inference.response_schema import DetectionStatus
 
 
 @dataclass(frozen=True)
@@ -11,7 +12,7 @@ class CropCandidate:
     image: Image.Image
     detection: Detection | None
     bbox: tuple[int, int, int, int] | None
-    status: str
+    status: DetectionStatus
 
 
 def make_crop_candidates(
@@ -28,7 +29,7 @@ def make_crop_candidates(
                     image=image.copy(),
                     detection=None,
                     bbox=None,
-                    status="fallback_whole_image",
+                    status=DetectionStatus.FALLBACK_WHOLE_IMAGE,
                 )
             ]
         return []
@@ -45,7 +46,7 @@ def make_crop_candidates(
                 image=image.crop(bbox),
                 detection=detection,
                 bbox=bbox,
-                status="detected",
+                status=DetectionStatus.DETECTED,
             )
         )
     return candidates

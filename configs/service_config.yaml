@@ -21,5 +21,6 @@ classifier:
   top_k: 5
 
 postprocess:
+  min_classification_probability: 0.5
   confusion_groups_enabled: false
   confusion_groups: []
