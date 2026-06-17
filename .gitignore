@@ -1,0 +1,6 @@
+models
+.vscode
+.ruff_cache
+*.pyc
+__pycache__
+.ipynb_checkpoints

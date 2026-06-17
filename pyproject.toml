@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wakareeru-inference"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pillow>=10.0",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "safetensors>=0.4",
+    "torch",
+    "torchvision",
+    "transformers>=4.57",
+    "wakareeru @ file:///Users/yukun/projects/wakareeru",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "pytest>=8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["wakareeru_inference"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
