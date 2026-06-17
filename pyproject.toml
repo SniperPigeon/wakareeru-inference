@@ -7,14 +7,12 @@ name = "wakareeru-inference"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "pillow>=10.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
-    "safetensors>=0.4",
     "torch",
     "torchvision",
     "transformers>=4.57",
-    "wakareeru @ git+https://github.com/SniperPigeon/wakareeru.git@main",
+    "wakareeru[inference] @ git+https://github.com/SniperPigeon/wakareeru.git@main",
 ]
 
 [project.optional-dependencies]
