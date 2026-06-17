@@ -41,6 +41,8 @@ python scripts/smoke_test_handler.py \
 
 本仓库不会自动下载或拉取模型。需要自行把模型放到 `configs/service_config.yaml` 中配置的本地路径。
 
+模型放置在`CloudFlare r2`的`models`桶内，不公开。若获得Endpoint及Keys请自行下载。
+
 默认配置：
 
 ```yaml
