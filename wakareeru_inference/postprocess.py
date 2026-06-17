@@ -1,7 +1,11 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from wakareeru_inference.config import ConfusionGroup, PostprocessConfig
+from wakareeru_inference.config import PostprocessConfig
+from wakareeru_inference.crop import CropCandidate
+
+if TYPE_CHECKING:
+    from wakareeru_inference.predict import SubjectPrediction
 
 
 @dataclass(frozen=True)
@@ -20,8 +24,18 @@ def build_confusion_group_index(config: PostprocessConfig) -> ConfusionGroupInde
 def attach_postprocess(
     *,
     predictions: list[dict[str, Any]],
-    confusion_groups: ConfusionGroupIndex,
+    config: PostprocessConfig,
 ) -> dict[str, Any]:
+    classification_payload = build_classification_payload(predictions)
+    if config.confusion_groups_enabled:
+        apply_confusion_groups(
+            classification_payload=classification_payload,
+            confusion_groups=build_confusion_group_index(config),
+        )
+    return classification_payload
+
+
+def build_classification_payload(predictions: list[dict[str, Any]]) -> dict[str, Any]:
     if not predictions:
         return {
             "top_prediction": None,
@@ -30,24 +44,80 @@ def attach_postprocess(
             "group_candidates": [],
         }
     top_prediction = predictions[0]
+    return {
+        "top_prediction": top_prediction,
+        "top_k": predictions,
+        "confusion_group": None,
+        "group_candidates": [],
+    }
+
+
+def apply_confusion_groups(
+    *,
+    classification_payload: dict[str, Any],
+    confusion_groups: ConfusionGroupIndex,
+) -> None:
+    top_prediction = classification_payload["top_prediction"]
+    if top_prediction is None:
+        return
+
     group_id = confusion_groups.label_to_group.get(str(top_prediction["label"]))
     group_candidates = []
     if group_id is not None:
         group_candidates = [
             prediction
-            for prediction in predictions
+            for prediction in classification_payload["top_k"]
             if confusion_groups.label_to_group.get(str(prediction["label"])) == group_id
         ]
+    classification_payload["confusion_group"] = group_id
+    classification_payload["group_candidates"] = group_candidates
+
+
+def build_response(
+    *,
+    subject_predictions: list["SubjectPrediction"],
+    postprocess_config: PostprocessConfig,
+) -> dict[str, Any]:
+    if not subject_predictions:
+        return {
+            "status": "no_detection",
+            "subjects": [],
+        }
+
+    subjects = [
+        build_subject_payload(
+            index=index,
+            candidate=subject_prediction.candidate,
+            predictions=subject_prediction.predictions,
+            postprocess_config=postprocess_config,
+        )
+        for index, subject_prediction in enumerate(subject_predictions)
+    ]
     return {
-        "top_prediction": top_prediction,
-        "top_k": predictions,
-        "confusion_group": group_id,
-        "group_candidates": group_candidates,
+        "status": "ok",
+        "subject_count": len(subjects),
+        "subjects": subjects,
     }
 
 
-def normalize_confusion_groups(groups: list[dict[str, Any]] | list[ConfusionGroup]) -> list[dict[str, Any]]:
-    return [
-        group.model_dump() if isinstance(group, ConfusionGroup) else group
-        for group in groups
-    ]
+def build_subject_payload(
+    *,
+    index: int,
+    candidate: CropCandidate,
+    predictions: list[dict[str, Any]],
+    postprocess_config: PostprocessConfig,
+) -> dict[str, Any]:
+    detection_payload = {
+        "status": candidate.status,
+        "bbox": list(candidate.bbox) if candidate.bbox else None,
+        "score": candidate.detection.score if candidate.detection else None,
+        "label": candidate.detection.label if candidate.detection else None,
+    }
+    return {
+        "index": index,
+        "detection": detection_payload,
+        "classification": attach_postprocess(
+            predictions=predictions,
+            config=postprocess_config,
+        ),
+    }
