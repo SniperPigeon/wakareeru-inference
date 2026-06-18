@@ -44,7 +44,36 @@ pip install --no-deps -e .
 "wakareeru @ git+https://github.com/SniperPigeon/wakareeru.git@v0.1.0"
 ```
 
-目前尚无 Dockerfile，Docker / serverless 镜像将在之后补齐。
+## Docker / RunPod 镜像
+
+仓库提供面向 RunPod Serverless 的 `linux/amd64` CUDA worker 镜像。默认基础镜像是 CUDA 版 PyTorch runtime，避免在本仓库镜像构建时重新解析或覆盖 `torch` / `torchvision`。
+
+本机或 CI 构建：
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  -t <registry>/wakareeru-inference:<tag> \
+  .
+```
+
+如需替换基础镜像：
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  --build-arg BASE_IMAGE=pytorch/pytorch:<version>-cuda<version>-cudnn<version>-runtime \
+  -t <registry>/wakareeru-inference:<tag> \
+  .
+```
+
+镜像入口会执行：
+
+```bash
+python -m wakareeru_inference.handler
+```
+
+如果构建上下文里存在 `models/`，默认会被打进镜像。若模型由 RunPod 启动脚本、对象存储同步或 volume 提供，构建时可以不包含 `models/`，但容器启动前必须保证 `configs/service_config.yaml` 指向的模型路径存在。
 
 ## 模型准备
 

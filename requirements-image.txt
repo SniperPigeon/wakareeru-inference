@@ -6,7 +6,9 @@
 
 pillow>=10.0
 pydantic>=2.7
+python-dotenv>=1.0
 pyyaml>=6.0
+runpod>=1.7
 safetensors>=0.4
 transformers>=4.57
-wakareeru @ git+https://github.com/SniperPigeon/wakareeru.git@main
+wakareeru[inference] @ git+https://github.com/SniperPigeon/wakareeru.git@main
