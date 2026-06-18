@@ -1,3 +1,8 @@
+version:
+  inference: "0.1.0"
+  detector: "grounding-dino"
+  classifier: "wakareeru-0.1.0-alpha.1"
+
 device: "auto"
 
 detector:

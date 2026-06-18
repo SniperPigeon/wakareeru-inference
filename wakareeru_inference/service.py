@@ -75,6 +75,7 @@ class WakareeruService:
         response = build_response(
             subject_predictions=subject_predictions,
             postprocess_config=self.config.postprocess,
+            version_config=self.config.version,
         )
         logger.info(
             "Inference result: %s elapsed=%.3fs",
@@ -111,6 +112,7 @@ class WakareeruService:
         response = build_response(
             subject_predictions=subject_predictions,
             postprocess_config=self.config.postprocess,
+            version_config=self.config.version,
         )
         logger.info(
             "Inference result: %s elapsed=%.3fs",

@@ -39,7 +39,14 @@ class PostprocessConfig(BaseModel):
     confusion_groups: list[ConfusionGroup] = Field(default_factory=list)
 
 
+class VersionConfig(BaseModel):
+    inference: str
+    detector: str
+    classifier: str
+
+
 class ServiceConfig(BaseModel):
+    version: VersionConfig
     device: str = "auto"
     detector: DetectorConfig
     crop: CropConfig

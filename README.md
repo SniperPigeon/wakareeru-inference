@@ -1,5 +1,7 @@
 # wakareeru-inference
 
+[![inference tag](https://img.shields.io/github/v/tag/SniperPigeon/wakareeru-inference?filter=inference-v*&label=inference)](https://github.com/SniperPigeon/wakareeru-inference/tags)
+
 `wakareeru-inference` 是 `wakareeru` 项目的 serverless 推理后端。当前目标是作为 RunPod / Azure 等 serverless 平台的 worker 代码运行：平台负责接收 HTTP 请求并调用本仓库提供的 handler，本仓库负责加载本地模型并完成完整图片识别。
 
 ## 快速启动
@@ -75,6 +77,32 @@ python -m wakareeru_inference.handler
 
 如果构建上下文里存在 `models/`，默认会被打进镜像。若模型由 RunPod 启动脚本、对象存储同步或 volume 提供，构建时可以不包含 `models/`，但容器启动前必须保证 `configs/service_config.yaml` 指向的模型路径存在。
 
+## 版本与发布
+
+推理端版本、检测模型版本和分类模型版本写在 `configs/service_config.yaml` 的 `version` 区块，并会随每次响应返回：
+
+```yaml
+version:
+  inference: "0.1.0"
+  detector: "grounding-dino"
+  classifier: "wakareeru-0.1.0-alpha.1"
+```
+
+推荐版本边界：
+
+- `version.inference`：本仓库推理 worker 代码版本，对应 Docker image tag 和 Git tag。
+- `version.detector`：本地检测模型 artifact 版本或不可变目录名。
+- `version.classifier`：Wakareeru 分类模型 artifact 版本或不可变目录名。
+
+README 顶部的版本 badge 会读取 GitHub 远端 tag，不需要手写更新。它只在 tag push 到 GitHub 后变化；本地未 push 的 tag 不会显示。
+
+发布当前推理端时推荐使用 annotated Git tag：
+
+```bash
+git tag -a inference-v0.1.0 -m "wakareeru-inference 0.1.0"
+git push origin inference-v0.1.0
+```
+
 ## 模型准备
 
 本仓库不会自动下载或拉取模型。需要自行把模型放到 `configs/service_config.yaml` 中配置的本地路径。
@@ -84,6 +112,11 @@ python -m wakareeru_inference.handler
 默认配置：
 
 ```yaml
+version:
+  inference: "0.1.0"
+  detector: "grounding-dino"
+  classifier: "wakareeru-0.1.0-alpha.1"
+
 detector:
   model_path: "models/grounding-dino"
 
@@ -187,17 +220,23 @@ handler(event)
 ```json
 {
   "status": "ok",
+  "metadata": {
+    "inference_version": "0.1.0",
+    "detector_version": "grounding-dino",
+    "classifier_version": "wakareeru-0.1.0-alpha.1"
+  },
   "subject_count": 1,
   "subjects": [
     {
       "index": 0,
       "detection": {
-        "status": "detected",
         "bbox": [120, 80, 900, 520],
-        "score": 0.74,
-        "label": "a train"
+        "status": "detected",
+        "label": "a train",
+        "score": 0.74
       },
       "classification": {
+        "status": "classified",
         "top_prediction": {
           "label_id": 0,
           "label": "101系",
@@ -223,17 +262,23 @@ handler(event)
 ```json
 {
   "status": "ok",
+  "metadata": {
+    "inference_version": "0.1.0",
+    "detector_version": "grounding-dino",
+    "classifier_version": "wakareeru-0.1.0-alpha.1"
+  },
   "subject_count": 1,
   "subjects": [
     {
       "index": 0,
       "detection": {
-        "status": "fallback_whole_image",
         "bbox": null,
-        "score": null,
-        "label": null
+        "status": "fallback_whole_image",
+        "label": null,
+        "score": null
       },
       "classification": {
+        "status": "classified",
         "top_prediction": {
           "label_id": 0,
           "label": "101系",
@@ -253,6 +298,11 @@ handler(event)
 ```json
 {
   "status": "no_detection",
+  "metadata": {
+    "inference_version": "0.1.0",
+    "detector_version": "grounding-dino",
+    "classifier_version": "wakareeru-0.1.0-alpha.1"
+  },
   "subjects": []
 }
 ```
@@ -262,6 +312,11 @@ handler(event)
 ```json
 {
   "status": "error",
+  "metadata": {
+    "inference_version": "0.1.0",
+    "detector_version": "grounding-dino",
+    "classifier_version": "wakareeru-0.1.0-alpha.1"
+  },
   "error": {
     "type": "ValueError",
     "message": "Request input must contain input.image_base64"

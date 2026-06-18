@@ -6,6 +6,7 @@ from typing import Any
 
 from wakareeru_inference.response_schema import ResponseStatus
 from wakareeru_inference.config import load_service_config
+from wakareeru_inference.postprocess import build_metadata_payload
 from wakareeru_inference.service import WakareeruService
 
 from dotenv import load_dotenv
@@ -66,6 +67,7 @@ def handler(event: dict[str, Any]) -> dict[str, Any]:
         logger.exception("Handler failed while processing event")
         return {
             "status": ResponseStatus.ERROR.value,
+            "metadata": build_metadata_payload(SERVICE.config.version),
             "error": {
                 "type": type(exc).__name__,
                 "message": str(exc),

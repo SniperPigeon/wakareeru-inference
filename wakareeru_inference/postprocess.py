@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from wakareeru_inference.config import PostprocessConfig
+from wakareeru_inference.config import PostprocessConfig, VersionConfig
 from wakareeru_inference.crop import CropCandidate
 from wakareeru_inference.response_schema import ClassificationStatus, ResponseStatus
 
@@ -90,10 +90,12 @@ def build_response(
     *,
     subject_predictions: list["SubjectPrediction"],
     postprocess_config: PostprocessConfig,
+    version_config: VersionConfig,
 ) -> dict[str, Any]:
     if not subject_predictions:
         return {
             "status": ResponseStatus.NO_DETECTION.value,
+            "metadata": build_metadata_payload(version_config),
             "subjects": [],
         }
 
@@ -108,8 +110,17 @@ def build_response(
     ]
     return {
         "status": ResponseStatus.OK.value,
+        "metadata": build_metadata_payload(version_config),
         "subject_count": len(subjects),
         "subjects": subjects,
+    }
+
+
+def build_metadata_payload(version_config: VersionConfig) -> dict[str, Any]:
+    return {
+        "inference_version": version_config.inference,
+        "detector_version": version_config.detector,
+        "classifier_version": version_config.classifier,
     }
 
 
@@ -121,10 +132,10 @@ def build_subject_payload(
     postprocess_config: PostprocessConfig,
 ) -> dict[str, Any]:
     detection_payload = {
-        "status": candidate.status.value,
         "bbox": list(candidate.bbox) if candidate.bbox else None,
-        "score": candidate.detection.score if candidate.detection else None,
+        "status": candidate.status.value,
         "label": candidate.detection.label if candidate.detection else None,
+        "score": candidate.detection.score if candidate.detection else None,
     }
     return {
         "index": index,
