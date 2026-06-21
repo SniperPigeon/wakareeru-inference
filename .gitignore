@@ -4,3 +4,6 @@ models
 *.pyc
 __pycache__
 .ipynb_checkpoints
+
+.env
+runpod-test.env

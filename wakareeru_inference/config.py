@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -58,8 +59,23 @@ def load_service_config(path: str | Path) -> ServiceConfig:
     path = Path(path)
     with path.open("r", encoding="utf-8") as file:
         payload = yaml.safe_load(file)
+    payload = apply_environment_overrides(payload)
     payload = resolve_model_paths(payload=payload, config_path=path)
     return ServiceConfig.model_validate(payload)
+
+
+def apply_environment_overrides(payload: dict) -> dict:
+    classifier_version = os.getenv("WAKAREERU_CLASSIFIER_VERSION")
+    classifier_model_dir = os.getenv("WAKAREERU_CLASSIFIER_MODEL_DIR")
+    if bool(classifier_version) != bool(classifier_model_dir):
+        raise ValueError(
+            "WAKAREERU_CLASSIFIER_VERSION and WAKAREERU_CLASSIFIER_MODEL_DIR "
+            "must be set together"
+        )
+    if classifier_version:
+        payload["version"]["classifier"] = classifier_version
+        payload["classifier"]["model_dir"] = classifier_model_dir
+    return payload
 
 
 def resolve_model_paths(*, payload: dict, config_path: Path) -> dict:
